@@ -34,8 +34,8 @@ void saveNegativeImage( struct Image *img )
 {
 	int row, col;
 
-	for( row=0; row<img->height; row++ )
-		for( col=0; col<img->width; col++ )
+	for(row = 0; row < img->height; row++)
+		for(col=0; col < img->width; col++)
 			img->pixels[row][col] = img->maxValue - img->pixels[row][col];
 
 	// Save as "negative.pgm". You must call this function to save your final image.
@@ -71,11 +71,12 @@ void generateHistogram( struct Image *img )
 	for( row=0; row<img->height; row++ )
 		for( col=0; col<img->width; col++ )
 		{
-			int val = img->pixels[row][col];			// Double-check that the value is in the valid range.
-			if( val>=0 && val<img->maxValue )
+			// Double-check that the value is in the valid range.
+			int val = img->pixels[row][col];
+			if(val >= 0 && val < img->maxValue)
 				hist[val]++;
 		}
-	
+
 	// Save the histogram to file. There is a Python script you can use to visualise the results from this file.
 	saveHistogram( hist, img->maxValue );
 
@@ -110,7 +111,7 @@ int main( int argc, char **argv )
         printf( "Option number '%s' invalid.\n", argv[2] );
         return EXIT_FAILURE;
     }
- 
+
 	// Attempts to open the file and return a structure for the image.
 	struct Image img;
 	readImage( argv[1], &img );
