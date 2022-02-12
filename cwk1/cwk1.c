@@ -34,10 +34,13 @@ void saveNegativeImage( struct Image *img )
 {
 	// I think splitting work on rows is more efficient, otherwise too much
 	// load balancing going on
-	#pragma omp parallel for
-	for(int row = 0; row < img->height; row++)
-		for(int col = 0; col < img->width; col++)
+	int row;
+	#pragma omp parallel for private(row)
+	for(row = 0; row < img->height; row++) {
+		int col;
+		for(col = 0; col < img->width; col++)
 			img->pixels[row][col] = img->maxValue - img->pixels[row][col];
+	}
 
 	// Save as "negative.pgm". You must call this function to save your final image.
 	writeNegativeImage( img );
@@ -46,16 +49,19 @@ void saveNegativeImage( struct Image *img )
 // Mirrors the image in-place, and outputs to a new .pgm file.
 void saveMirrorImage( struct Image *img )
 {
-	#pragma omp parallel for
-	for(int row = 0; row < img->height; row++)
+	int row;
+	#pragma omp parallel for private(row)
+	for(row = 0; row < img->height; row++) {
 		// divide by 2 will leave a column of odd width images wrong
 		// can't do much though
-		for(int col = 0; col < img->width / 2; col++) {
+		int col;
+		for(col = 0; col < img->width / 2; col++) {
 			int rev_col = img->width - col - 1;
 			int tmp = img->pixels[row][col];
 			img->pixels[row][col] = img->pixels[row][rev_col];
 			img->pixels[row][rev_col] = tmp;
 		}
+	}
 
 	// Save as "mirror.pgm". You must call this function to save your final image.
 	writeMirrorImage( img );
@@ -64,11 +70,13 @@ void saveMirrorImage( struct Image *img )
 // Blurs the image and outputs to a new .pgm file.
 void saveBlurredImage( struct Image *img )
 {
-	for (int i = 0; i < 10; i++)
-		for (int red_black = 0; red_black < 2; red_black++)
-			#pragma omp parallel for
-			for(int row = 1; row < img->height - 1; row++)
-				for(int col = 1; col < img->width - 1; col++) {
+	int i, red_black, row;
+	for (i = 0; i < 10; i++)
+		for (red_black = 0; red_black < 2; red_black++)
+			#pragma omp parallel for private(row)
+			for(row = 1; row < img->height - 1; row++) {
+				int col;
+				for(col = 1; col < img->width - 1; col++) {
 					// generalise the red-blackness to 2D
 					// (ensures we skip different columns
 					// on each row, so that it's a full checkerboard)
@@ -84,6 +92,7 @@ void saveBlurredImage( struct Image *img )
 						img->pixels[row][col + 1]
 					) / 4;
 				}
+			}
 
 	// Save as "blurred.pgm". You must call this function to save your final image.
 	writeBlurredImage( img );
@@ -94,17 +103,20 @@ void generateHistogram( struct Image *img )
 {
 	// Initialise the histogram to zero ("calloc" rather than "malloc"). You do not need to parallelise this initialisation.
 	int *hist = (int*)calloc(img->maxValue, sizeof(int));
+	int row;
 
 	// Loop through all pixels and add to the relevant histogram bin.
-	#pragma omp parallel for
-	for(int row = 0; row < img->height; row++)
-		for(int col = 0; col < img->width; col++) {
+	#pragma omp parallel for private(row)
+	for(row = 0; row < img->height; row++) {
+		int col;
+		for(col = 0; col < img->width; col++) {
 			// Double-check that the value is in the valid range.
 			int val = img->pixels[row][col];
 			if(val >= 0 && val < img->maxValue)
 				#pragma omp atomic
 				hist[val]++;
 		}
+	}
 
 	// Save the histogram to file. There is a Python script you can use to visualise the results from this file.
 	saveHistogram( hist, img->maxValue );
