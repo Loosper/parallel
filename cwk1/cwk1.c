@@ -77,11 +77,13 @@ void generateHistogram( struct Image *img )
 	int *hist = (int*)calloc(img->maxValue, sizeof(int));
 
 	// Loop through all pixels and add to the relevant histogram bin.
+	#pragma omp parallel for
 	for(int row = 0; row < img->height; row++)
 		for(int col = 0; col < img->width; col++) {
 			// Double-check that the value is in the valid range.
 			int val = img->pixels[row][col];
 			if(val >= 0 && val < img->maxValue)
+				#pragma omp atomic
 				hist[val]++;
 		}
 
