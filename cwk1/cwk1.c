@@ -64,7 +64,26 @@ void saveMirrorImage( struct Image *img )
 // Blurs the image and outputs to a new .pgm file.
 void saveBlurredImage( struct Image *img )
 {
-	// Your parallel implementation should go here.
+	for (int i = 0; i < 10; i++)
+		for (int red_black = 0; red_black < 2; red_black++)
+			#pragma omp parallel for
+			for(int row = 1; row < img->height - 1; row++)
+				for(int col = 1; col < img->width - 1; col++) {
+					// generalise the red-blackness to 2D
+					// (ensures we skip different columns
+					// on each row, so that it's a full checkerboard)
+					if (
+						(col % 2 == red_black && row % 2 == 0) ||
+						(col % 2 != red_black && row % 2 != 0)
+					)
+						continue;
+					img->pixels[row][col] = (
+						img->pixels[row - 1][col] +
+						img->pixels[row + 1][col] +
+						img->pixels[row][col - 1] +
+						img->pixels[row][col + 1]
+					) / 4;
+				}
 
 	// Save as "blurred.pgm". You must call this function to save your final image.
 	writeBlurredImage( img );
