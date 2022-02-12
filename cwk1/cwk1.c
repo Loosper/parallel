@@ -32,6 +32,8 @@
 // Constructs a 'negative' image in place, and saves as a new .pgm file.
 void saveNegativeImage( struct Image *img )
 {
+	// I think splitting work on rows is more efficient, otherwise too much
+	// load balancing going on
 	#pragma omp parallel for
 	for(int row = 0; row < img->height; row++)
 		for(int col = 0; col < img->width; col++)
@@ -44,7 +46,16 @@ void saveNegativeImage( struct Image *img )
 // Mirrors the image in-place, and outputs to a new .pgm file.
 void saveMirrorImage( struct Image *img )
 {
-	// Your parallel implementation should go here.
+	#pragma omp parallel for
+	for(int row = 0; row < img->height; row++)
+		// divide by 2 will leave a column of odd width images wrong
+		// can't do much though
+		for(int col = 0; col < img->width / 2; col++) {
+			int rev_col = img->width - col - 1;
+			int tmp = img->pixels[row][col];
+			img->pixels[row][col] = img->pixels[row][rev_col];
+			img->pixels[row][rev_col] = tmp;
+		}
 
 	// Save as "mirror.pgm". You must call this function to save your final image.
 	writeMirrorImage( img );
