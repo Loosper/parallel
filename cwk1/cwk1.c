@@ -32,10 +32,9 @@
 // Constructs a 'negative' image in place, and saves as a new .pgm file.
 void saveNegativeImage( struct Image *img )
 {
-	int row, col;
-
-	for(row = 0; row < img->height; row++)
-		for(col=0; col < img->width; col++)
+	#pragma omp parallel for
+	for(int row = 0; row < img->height; row++)
+		for(int col = 0; col < img->width; col++)
 			img->pixels[row][col] = img->maxValue - img->pixels[row][col];
 
 	// Save as "negative.pgm". You must call this function to save your final image.
