@@ -74,13 +74,11 @@ void saveBlurredImage( struct Image *img )
 void generateHistogram( struct Image *img )
 {
 	// Initialise the histogram to zero ("calloc" rather than "malloc"). You do not need to parallelise this initialisation.
-	int *hist = (int*) calloc( img->maxValue, sizeof(int) );
+	int *hist = (int*)calloc(img->maxValue, sizeof(int));
 
 	// Loop through all pixels and add to the relevant histogram bin.
-	int row, col;
-	for( row=0; row<img->height; row++ )
-		for( col=0; col<img->width; col++ )
-		{
+	for(int row = 0; row < img->height; row++)
+		for(int col = 0; col < img->width; col++) {
 			// Double-check that the value is in the valid range.
 			int val = img->pixels[row][col];
 			if(val >= 0 && val < img->maxValue)
@@ -89,7 +87,6 @@ void generateHistogram( struct Image *img )
 
 	// Save the histogram to file. There is a Python script you can use to visualise the results from this file.
 	saveHistogram( hist, img->maxValue );
-
 	// Free up the memory allocated for the histogram.
 	free( hist );
 }
