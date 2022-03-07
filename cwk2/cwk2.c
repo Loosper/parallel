@@ -84,8 +84,26 @@ int main(int argc, char *argv[])
 	//
 
 	if (numprocs && ((numprocs & (numprocs - 1)) == 0)) {
-		// TODO: binary tree
-		MPI_Bcast(x, N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+		int offset = 0;
+		int chunk;
+
+		for (chunk = numprocs / 2; chunk >= 1; chunk /= 2) {
+			// sending side
+			if (rank < offset + chunk) {
+				if (rank == offset) {
+					// printf("%d to send to %d (%d)\n", offset, offset + chunk, chunk);
+					MPI_Send(x, N, MPI_FLOAT, offset + chunk, 0, MPI_COMM_WORLD);
+				}
+			// receiving side
+			} else {
+				if (rank == offset + chunk) {
+					// printf("%d to recv from %d (%d)\n", offset + chunk, offset, chunk);
+					MPI_Recv(x, N, MPI_FLOAT, offset, 0, MPI_COMM_WORLD, NULL);
+				}
+				offset += chunk;
+			}
+			MPI_Barrier(MPI_COMM_WORLD);
+		}
 	} else {
 		// just scatter it otherwise
 		MPI_Bcast(x, N, MPI_FLOAT, 0, MPI_COMM_WORLD);
