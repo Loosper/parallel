@@ -20,8 +20,6 @@ No. Process:                        Mean time (average of 3 runs)           Para
 Architecture that the timing runs were performed on:
     AMD Ryzen 7 PRO 4750U with N=30000
 
-A brief interpretation of these results (2-3 sentences should be enough):
-
     It is clear from that for a fixed problem size the speedup increase is
     logarithmic and therefore increasing the number of processes gives
     diminishing returns. This is consistent with Amdahl's law, as a large
