@@ -22,6 +22,15 @@
 // different versions for the purposes of assessment.
 #include "cwk2_extra.h"
 
+void do_calculation(int rows, int cols, float *A, float *x, float *b)
+{
+	int row, col;
+	for (row = 0; row < rows; row++) {
+		b[row] = 0.0f;
+		for (col = 0; col < cols; col++)
+			b[row] += A[row * cols + col] * x[col];
+	}
+}
 
 int main(int argc, char *argv[])
 {
@@ -55,8 +64,9 @@ int main(int argc, char *argv[])
 	// All processes also have an equal number of matrix rows, and a
 	// portion of the solution vector, so allocate memory for these as
 	// well.
-	float *A_perProc = (float *) malloc(N * rowsPerProc * sizeof(float));
-	float *b_perProc = (float *) malloc(    rowsPerProc * sizeof(float));
+	size_t A_size = N * rowsPerProc;
+	float *A_perProc = (float *) malloc(A_size      * sizeof(float));
+	float *b_perProc = (float *) malloc(rowsPerProc * sizeof(float));
 
 	// Allocate the full matrix and the full solution vector on rank 0
 	// only. Also initialise A and x with values.
@@ -73,7 +83,32 @@ int main(int argc, char *argv[])
 	// Perform matrix-vector multiplication in parallel.
 	//
 
-	// Your solution should go here.
+	if (numprocs && ((numprocs & (numprocs - 1)) == 0)) {
+		// TODO: binary tree
+		MPI_Bcast(x, N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+	} else {
+		// just scatter it otherwise
+		MPI_Bcast(x, N, MPI_FLOAT, 0, MPI_COMM_WORLD);
+	}
+
+	MPI_Scatter(
+		A,         A_size, MPI_FLOAT,
+		A_perProc, A_size, MPI_FLOAT,
+		0, MPI_COMM_WORLD
+	);
+	MPI_Scatter(
+		b,         rowsPerProc, MPI_FLOAT,
+		b_perProc, rowsPerProc, MPI_FLOAT,
+		0, MPI_COMM_WORLD
+	);
+
+	do_calculation(rowsPerProc, N, A_perProc, x, b_perProc);
+
+	MPI_Gather(
+		b_perProc, rowsPerProc, MPI_FLOAT,
+		b,         rowsPerProc, MPI_FLOAT,
+		0, MPI_COMM_WORLD
+	);
 
 	//
 	// Check the answer on rank 0 in serial. Also output the result of the
