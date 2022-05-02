@@ -23,6 +23,10 @@
 // Do not alter these routines, as they will be replaced with different versions for assessment.
 #include "helper_cwk.h"
 
+int round_up(int x)
+{
+    return (x + 7) & ~7;
+}
 
 //
 // Main.
@@ -48,7 +52,7 @@ int main( int argc, char **argv )
     cl_int status;
     cl_command_queue queue = clCreateCommandQueue( context, device, 0, &status );
 
-    int gridSize = N * N * sizeof(float);
+    int gridSize = round_up(N) * round_up(N) * sizeof(float);
     // Allocate memory for the grid. For simplicity, this uses a one-dimensional array.
     float *hostGrid = (float*) malloc(gridSize);
 
@@ -79,7 +83,7 @@ int main( int argc, char **argv )
     // groups of 128 was given as a sensible default in lectures. Since I
     // don't use the group bit, but just need it for the program to run set it
     // to the default
-    size_t workGroupSize[2] = {2, 2};
+    size_t workGroupSize[2] = {8, 8};
 
     status = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, globalSize, workGroupSize, 0, NULL, NULL);
     if(status != CL_SUCCESS) {
