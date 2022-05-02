@@ -29,7 +29,7 @@
 //
 int main( int argc, char **argv )
 {
- 
+
     //
     // Parse command line argument and check it is valid. Handled by a routine in the helper file.
     //

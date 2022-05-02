@@ -88,11 +88,11 @@ void displayGrid( float *grid, int N )
 
 
 //
-//	Tries to open up a single GPU on the first OpenCL framework, returning the context	
+//	Tries to open up a single GPU on the first OpenCL framework, returning the context
 //	and filling the passed device i.d.
-//	
+//
 //	Fails with a brief error message and calls exit(EXIT_FAILURE) if there was some problem.
-// 
+//
 cl_context simpleOpenContext_GPU( cl_device_id *device )
 {
 	// Status; returned/modified after each API call; zero if successful.
@@ -125,10 +125,10 @@ cl_context simpleOpenContext_GPU( cl_device_id *device )
 	}
 	*device = GPUIDs[0];			// Use the first one.
 	free( GPUIDs );
-	
+
 	// Create a context and associate it with this device.
 	cl_context context = clCreateContext( NULL, 1, device, NULL, NULL, &status );
-	
+
 	return context;
 }
 
@@ -144,7 +144,7 @@ cl_kernel compileKernelFromFile( const char *filename, const char *kernelName, c
 	FILE *fp;
 	char *fileData;
 	long fileSize;
-	
+
 	// Open the file.
 	fp = fopen( filename, "r" );
 	if( !fp )
@@ -152,7 +152,7 @@ cl_kernel compileKernelFromFile( const char *filename, const char *kernelName, c
 		printf( "Could not open the file '%s'\n", filename );
 		exit( EXIT_FAILURE );
 	}
-	
+
 	// Get the file size; also check it is positive.
 	if( fseek(fp,0,SEEK_END) )
 	{
@@ -165,14 +165,14 @@ cl_kernel compileKernelFromFile( const char *filename, const char *kernelName, c
 		printf( "Could not read file (or zero size) for file '%s'.\n", filename );
 		exit( EXIT_FAILURE );
 	}
-	
+
 	// Move to the start of the file.
 	if( fseek(fp,0,SEEK_SET) )
 	{
 		printf( "Error reading the file '%s' (could not move to start).\n", filename );
 		exit( EXIT_FAILURE );
 	}
-	
+
 	// Read the contents; also need a termination character.
 	fileData = (char*) malloc( fileSize+1 );
 	if( !fileData )
@@ -185,17 +185,17 @@ cl_kernel compileKernelFromFile( const char *filename, const char *kernelName, c
 		printf( "Error reading the file '%s'.\n", filename );
 		exit( EXIT_FAILURE );
 	}
-	
+
 	// Terminate the string.
 	fileData[fileSize] = '\0';
-	
+
 	// Close the file.
 	if( fclose(fp) )
 	{
 		printf( "Error closing the file '%s'.\n", filename );
 		exit( EXIT_FAILURE );
 	}
-	
+
 	// Now for the OpenCL-specific stuff. Create the program from the character string.
 	cl_int status;
 	cl_program program = clCreateProgramWithSource( context, 1, (const char**)&fileData, NULL, &status );
@@ -209,36 +209,36 @@ cl_kernel compileKernelFromFile( const char *filename, const char *kernelName, c
 	if( (status=clBuildProgram(program,1,&device,NULL,NULL,NULL)) != CL_SUCCESS )
 	{
 		printf( "Failed to build the kernel '%s' from the file '%s'; error code %i.\n", kernelName, filename, status );
-		
+
 		// Provide more information about the nature of the fail.
 		size_t logSize;
 		clGetProgramBuildInfo( program, device, CL_PROGRAM_BUILD_LOG, 0, NULL, &logSize );
 		char *log = (char*) malloc( (logSize+1)*sizeof(char) );
-		
+
 		clGetProgramBuildInfo( program, device, CL_PROGRAM_BUILD_LOG, logSize+1, log, NULL );
 		printf( "Build log:\n%s\n", log );
-		
+
 		// Clear up and quit.
 		free( log );
 		exit( EXIT_FAILURE );
 	}
-	
+
 	// Now compile it.
 	cl_kernel kernel = clCreateKernel( program, kernelName, &status );
 	if( status != CL_SUCCESS )
 	{
 		printf( "Failed to create the OpenCL kernel with error code %i.\n", status );
-		
+
 		// Common mistake(s).
 		if( status==-46 ) printf( "Ensure the kernel name '%s' is also the name of the function.\n", kernelName );
 
 		exit( EXIT_FAILURE );
 	}
-	
+
 	// Clear up (not the kernel, which will have to be released by the caller).
 	clReleaseProgram( program );
 	free( fileData );
-	
+
 	return kernel;
 }
 
