@@ -48,19 +48,50 @@ int main( int argc, char **argv )
     cl_int status;
     cl_command_queue queue = clCreateCommandQueue( context, device, 0, &status );
 
+    size_t gridSize = N * N * sizeof(float);
     // Allocate memory for the grid. For simplicity, this uses a one-dimensional array.
-	float *hostGrid = (float*) malloc( N * N * sizeof(float) );
+    float *hostGrid = (float*) malloc(gridSize);
 
-	// Fill the grid with some initial values, and display to stdout. fillGrid() is defined in the helper file.
+    // Fill the grid with some initial values, and display to stdout. fillGrid() is defined in the helper file.
     fillGrid( hostGrid, N );
     printf( "Original grid (only top-left shown if too large):\n" );
     displayGrid( hostGrid, N );
 
-	//
-	// Allocate memory for the grid on the GPU and apply the heat equation as per the instructions.
-	//
+    cl_mem deviceInGrid = clCreateBuffer(
+        context,
+        CL_MEM_READ_ONLY | CL_MEM_COPY_HOST_PTR, gridSize, hostGrid,
+        &status
+    );
 
-	// Your solution should primarily go here.
+    cl_mem deviceOutGrid = clCreateBuffer(
+        context,
+        CL_MEM_WRITE_ONLY, gridSize, NULL,
+        &status
+    );
+
+    cl_kernel kernel = compileKernelFromFile("cwk3.cl", "heat", context, device);
+
+    status = clSetKernelArg(kernel, 0, sizeof(cl_mem), &deviceInGrid);
+    status = clSetKernelArg(kernel, 0, sizeof(cl_mem), &deviceOutGrid);
+
+    size_t globalSize[2]    = {};
+    size_t workGroupSize[2] = {};
+
+    clEnqueueNDRangeKernel(queue, kernel, 2, NULL, globalSize, workGroupSize, 0, NULL, NULL);
+    if(status != CL_SUCCESS) {
+        printf("Failed to enqueue kernel: %d.\n", status);
+        return EXIT_FAILURE;
+    }
+
+    status = clEnqueueReadBuffer(queue, deviceOutGrid, CL_TRUE, 0, gridSize, hostGrid, 0, NULL, NULL);
+    if(status != CL_SUCCESS) {
+        printf("Failed copying data back: %d.\n", status);
+        return EXIT_FAILURE;
+    }
+
+    clReleaseMemObject(deviceInGrid);
+    clReleaseMemObject(deviceOutGrid);
+    clReleaseKernel(kernel);
 
     //
     // Display the final result. This assumes that the iterated grid was copied back to the hostGrid array.
