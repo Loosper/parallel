@@ -48,7 +48,7 @@ int main( int argc, char **argv )
     cl_int status;
     cl_command_queue queue = clCreateCommandQueue( context, device, 0, &status );
 
-    size_t gridSize = N * N * sizeof(float);
+    int gridSize = N * N * sizeof(float);
     // Allocate memory for the grid. For simplicity, this uses a one-dimensional array.
     float *hostGrid = (float*) malloc(gridSize);
 
@@ -76,12 +76,12 @@ int main( int argc, char **argv )
     status = clSetKernelArg(kernel, 2, sizeof(N), &N);
 
     size_t globalSize[2] = {N - 2, N - 2};
-    // groupos of 128 was given as a sensible default in lectures. Since I
+    // groups of 128 was given as a sensible default in lectures. Since I
     // don't use the group bit, but just need it for the program to run set it
     // to the default
-    size_t workGroupSize[2] = {8, 8};
+    size_t workGroupSize[2] = {2, 2};
 
-    clEnqueueNDRangeKernel(queue, kernel, 2, NULL, globalSize, workGroupSize, 0, NULL, NULL);
+    status = clEnqueueNDRangeKernel(queue, kernel, 2, NULL, globalSize, workGroupSize, 0, NULL, NULL);
     if(status != CL_SUCCESS) {
         printf("Failed to enqueue kernel: %d.\n", status);
         return EXIT_FAILURE;
