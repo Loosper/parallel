@@ -72,10 +72,14 @@ int main( int argc, char **argv )
     cl_kernel kernel = compileKernelFromFile("cwk3.cl", "heat", context, device);
 
     status = clSetKernelArg(kernel, 0, sizeof(cl_mem), &deviceInGrid);
-    status = clSetKernelArg(kernel, 0, sizeof(cl_mem), &deviceOutGrid);
+    status = clSetKernelArg(kernel, 1, sizeof(cl_mem), &deviceOutGrid);
+    status = clSetKernelArg(kernel, 2, sizeof(N), &N);
 
-    size_t globalSize[2]    = {};
-    size_t workGroupSize[2] = {};
+    size_t globalSize[2] = {N - 2, N - 2};
+    // groupos of 128 was given as a sensible default in lectures. Since I
+    // don't use the group bit, but just need it for the program to run set it
+    // to the default
+    size_t workGroupSize[2] = {8, 8};
 
     clEnqueueNDRangeKernel(queue, kernel, 2, NULL, globalSize, workGroupSize, 0, NULL, NULL);
     if(status != CL_SUCCESS) {
