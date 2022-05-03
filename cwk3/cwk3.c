@@ -53,7 +53,7 @@ int main( int argc, char **argv )
     cl_command_queue queue = clCreateCommandQueue( context, device, 0, &status );
 
     // 1 caveta: i substract 2. so have to account for that too
-    int gridSize = round_up(N) * round_up(N) * sizeof(float);
+    int gridSize = N * N * sizeof(float);
     // Allocate memory for the grid. For simplicity, this uses a one-dimensional array.
     float *hostGrid = (float*) malloc(gridSize);
 
@@ -80,7 +80,11 @@ int main( int argc, char **argv )
     status = clSetKernelArg(kernel, 1, sizeof(cl_mem), &deviceOutGrid);
     status = clSetKernelArg(kernel, 2, sizeof(N), &N);
 
-    size_t globalSize[2] = {N, N};
+    // since we set a fairly large group size, we need to be a multiple of it.
+    // we only round up to 8 on each dimention, so max wasted instances will be
+    // 64 which for large N will be a small fraction. The kernel will
+    // ignore those instances so we don't segfault
+    size_t globalSize[2] = {round_up(N), round_up(N)};
     // groups of 128 was given as a sensible default in lectures. Since I
     // don't use the group bit, but just need it for the program to run set it
     // to the default
